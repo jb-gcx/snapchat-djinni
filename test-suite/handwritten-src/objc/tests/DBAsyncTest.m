@@ -51,6 +51,37 @@
     XCTAssertEqualObjects([f3 get], @"36");
 }
 
+- (void)testFutureObjCNullable {
+    DJPromise<NSNumber *> *p1 = [[DJPromise alloc] init];
+    DJFuture<NSNumber *> *f1 = [p1 getFuture];
+    [p1 setValue:nil];
+
+    DJPromise<NSNumber *> *p2 = [[DJPromise alloc] init];
+    DJFuture<NSNumber *> *f2 = [p2 getFuture];
+    [p2 setValue];
+
+    // setValue:nil doesn't set the same value as setValue without parameters.
+    // Is this expected? Is it good practice to use [NSNull null], like setValue does?
+    // It seems problematic to me, but I lack the ObjC knowledge.
+    XCTAssertEqual([f1 get], [f2 get]);
+}
+
+- (void)testFutureRoundtripWithNil {
+    // This shows a crash that occurs when passing nil into a promise that, on cpp side, doesn't expect nil values
+    DJPromise<NSNumber *> *p = [[DJPromise alloc] init];
+    DJFuture<NSNumber *> *f = [p getFuture];
+    DJFuture<NSString *> *f2 = [DBTestHelpers futureRoundtrip:f];
+    [p setValue:nil];
+}
+
+- (void)testFutureRoundtripWithNSNull {
+    // This shows a crash that occurs when passing [NSNull null] into a promise that, on cpp side, doesn't expect nil values
+    DJPromise<NSNumber *> *p = [[DJPromise alloc] init];
+    DJFuture<NSNumber *> *f = [p getFuture];
+    DJFuture<NSString *> *f2 = [DBTestHelpers futureRoundtrip:f];
+    [p setValue];
+}
+
 - (void)testFutureRoundtripWithException {
     DJPromise<NSString *> *p = [[DJPromise alloc] init];
     DJFuture<NSString *> *f = [p getFuture];
